@@ -1,29 +1,96 @@
-extern crate gio;
-extern crate gtk;
+use iced::window;
+use iced::{
+    button, Align, Background, Button, Color, Column, Container, Element, Font,
+    HorizontalAlignment, Length, Sandbox, Settings, Text,
+};
 
-use gio::prelude::*;
-use gtk::prelude::*;
+pub fn main() {
+    Counter::run(Settings {
+        window: window::Settings {
+            size: (300, 300), // (x, y)
+            resizable: true,
+            decorations: true,
+        },
+        default_font: None,
+        antialiasing: true,
+        flags: (),
+    })
+}
 
-use gtk::{Application, ApplicationWindow, Button};
+// state
+struct Counter {
+    // counter value
+    value: i32,
 
-fn main() {
-    let application =
-        Application::new(Some("com.github.gtk-rs.examples.basic"), Default::default())
-            .expect("failed to initialize GTK application");
+    // state of the two buttons
+    increment_button: button::State,
+    reset_button: button::State,
+}
 
-    application.connect_activate(|app| {
-        let window = ApplicationWindow::new(app);
-        window.set_title("First GTK+ Program");
-        window.set_default_size(350, 70);
+// message
+#[derive(Debug, Clone, Copy)]
+pub enum Message {
+    Increment,
+    Reset,
+}
 
-        let button = Button::new_with_label("Click me!");
-        button.connect_clicked(|_| {
-            println!("Clicked!");
-        });
-        window.add(&button);
+impl Sandbox for Counter {
+    type Message = Message;
 
-        window.show_all();
-    });
+    fn new() -> Self {
+        Counter {
+            value: 0,
+            increment_button: button::State::default(),
+            reset_button: button::State::default(),
+        }
+    }
 
-    application.run(&[]);
+    fn title(&self) -> String {
+        String::from("count up")
+    }
+
+    // update
+    fn update(&mut self, message: Message) {
+        match message {
+            Message::Increment => {
+                self.value += 1;
+            }
+            Message::Reset => {
+                self.value = 0;
+            }
+        }
+    }
+
+    // view logic
+    fn view(&mut self) -> Element<Message> {
+        Container::new(
+            Column::new()
+                .push(
+                    Button::new(&mut self.increment_button, Text::new("+1"))
+                        .on_press(Message::Increment)
+                        // .border_radius(5)
+                        // .background(Background::Color(Color {
+                        //     r: 0.8,
+                        //     g: 0.8,
+                        //     b: 0.8,
+                        //     a: 1.,
+                        // })),
+                )
+                .push(
+                    Text::new(self.value.to_string())
+                        .size(50)
+                        .horizontal_alignment(HorizontalAlignment::Center),
+                )
+                .push(
+                    Button::new(&mut self.reset_button, Text::new("reset"))
+                        .on_press(Message::Reset),
+                )
+                .align_items(Align::Center),
+        )
+        .width(Length::Fill)
+        .center_x()
+        .height(Length::Fill)
+        .center_y()
+        .into()
+    }
 }
